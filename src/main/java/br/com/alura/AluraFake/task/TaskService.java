@@ -47,6 +47,15 @@ public class TaskService {
         persistTask(course, request.getStatement(), request.getOrder(), Type.SINGLE_CHOICE, optionsJson);
     }
 
+    public void createMultipleChoiceTask(MultipleChoiceTaskRequest request) {
+        Course course = validateCommonRequirements(request.getCourseId(), request.getStatement(), request.getOrder());
+        validateMultipleChoiceOptions(request.getOptions(), request.getStatement());
+        shiftTasksForNewOrder(course, request.getOrder());
+        String optionsJson = convertOptionsToJson(request.getOptions());
+        persistTask(course, request.getStatement(), request.getOrder(), Type.MULTIPLE_CHOICE, optionsJson);
+    }
+
+
     private Course validateCommonRequirements(Long courseId, String statement, Integer order) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -98,12 +107,71 @@ public class TaskService {
                     "A atividade deve ter no mínimo 2 e no máximo 5 alternativas");
         }
 
+        validateCommonOptionRules(options, statement);
+
+        long correctCount = options.stream()
+                .filter(OptionRequest::getIsCorrect)
+                .count();
+
+        if (correctCount != 1) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "A atividade deve ter uma única alternativa correta. Encontradas: " + correctCount);
+        }
+    }
+
+    private String convertOptionsToJson(List<OptionRequest> options) {
+        try {
+            return objectMapper.writeValueAsString(options);
+        } catch (JsonProcessingException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Erro ao processar opções da atividade");
+        }
+    }
+
+    private void validateMultipleChoiceOptions(List<OptionRequest> options, String statement) {
+        if (options == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Atividade de múltipla escolha deve ter opções");
+        }
+
+        int size = options.size();
+        if (size < 3 || size > 5) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "A atividade deve ter no mínimo 3 e no máximo 5 alternativas");
+        }
+
+        validateCommonOptionRules(options, statement);
+
+        long correctCount = options.stream()
+                .filter(OptionRequest::getIsCorrect)
+                .count();
+
+        if (correctCount < 2) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "A atividade deve ter duas ou mais alternativas corretas");
+        }
+
+        long incorrectCount = size - correctCount;
+        if (incorrectCount < 1) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "A atividade deve ter ao menos uma alternativa incorreta");
+        }
+    }
+
+    private void validateCommonOptionRules(List<OptionRequest> options, String statement) {
         for (OptionRequest option : options) {
             String text = option.getOption();
             if (text == null || text.length() < 4 || text.length() > 80) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
-                        "As alternativas devem ter no mínimo 4 e no máximo 80 caracteres");
+                        "As alternativas devem ter no mínimo 4 e no máximo 80 caracteres. " +
+                                "Problema na opção: '" + text + "'");
             }
 
             if (text.equals(statement)) {
@@ -123,26 +191,6 @@ public class TaskService {
                     HttpStatus.BAD_REQUEST,
                     "As alternativas não podem ser iguais entre si");
         }
-
-        long correctCount = options.stream()
-                .filter(OptionRequest::getIsCorrect)
-                .count();
-
-        if (correctCount != 1) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "A atividade deve ter uma única alternativa correta");
-        }
-    }
-
-    private String convertOptionsToJson(List<OptionRequest> options) {
-        try {
-            return objectMapper.writeValueAsString(options);
-        } catch (JsonProcessingException e) {
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Erro ao processar opções da atividade");
-        }
     }
 
     private void persistTask(Course course, String statement, Integer order, Type type, String optionsJson) {
@@ -156,8 +204,5 @@ public class TaskService {
             task.setOptions(optionsJson);
         }
         taskRepository.save(task);
-    }
-
-    public void createMultipleChoiceTask(MultipleChoiceTaskRequest request) {
     }
 }
