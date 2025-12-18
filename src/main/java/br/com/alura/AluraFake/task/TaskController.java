@@ -26,6 +26,7 @@ public class TaskController {
 
     @PostMapping("/task/new/singlechoice")
     public ResponseEntity newSingleChoice(@Valid @RequestBody SingleChoiceTaskRequest request) {
+        taskService.createSingleChoiceTask(request);
         return ResponseEntity.ok().build();
     }
 
