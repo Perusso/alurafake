@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 
 @Service
 public class TaskService {
@@ -25,8 +27,6 @@ public class TaskService {
         this.taskRepository = taskRepository;
     }
 
-
-    //TODO: Shift orders of existing tasks if necessary
     //TODO: Refactor validation logic into separate methods
     //TODO: Create specific exception classes for better error handling
     public void createOpenTextTask(OpenTextTaskRequest request) {
@@ -59,6 +59,9 @@ public class TaskService {
                             "A próxima ordem permitida é %d", maxOrder + 1));
         }
 
+        shiftTasksForNewOrder(course, request.getOrder());
+
+
         Task task = new Task();
         task.setCourse(course);
         task.setStatement(request.getStatement());
@@ -66,6 +69,14 @@ public class TaskService {
         task.setType(Type.OPEN_TEXT);
 
         taskRepository.save(task);
+    }
+
+    private void shiftTasksForNewOrder(Course course, Integer newOrder) {
+        List<Task> tasksToShift = taskRepository.findByCourseAndOrderGreaterThanEqual(course, newOrder);
+        for (Task task : tasksToShift) {
+            task.setOrder(task.getOrder() + 1);
+        }
+        taskRepository.saveAll(tasksToShift);
     }
 
     public void createSingleChoiceTask(SingleChoiceTaskRequest request) {
