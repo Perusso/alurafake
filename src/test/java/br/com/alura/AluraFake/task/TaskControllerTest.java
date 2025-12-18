@@ -1,6 +1,7 @@
 package br.com.alura.AluraFake.task;
 
 import br.com.alura.AluraFake.course.CourseRepository;
+import br.com.alura.AluraFake.task.dto.MultipleChoiceTaskRequest;
 import br.com.alura.AluraFake.task.dto.OpenTextTaskRequest;
 import br.com.alura.AluraFake.task.dto.OptionRequest;
 import br.com.alura.AluraFake.task.dto.SingleChoiceTaskRequest;
@@ -137,6 +138,90 @@ public class TaskControllerTest {
                 .when(taskService).createSingleChoiceTask(any(SingleChoiceTaskRequest.class));
 
         mockMvc.perform(post("/task/new/singlechoice")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+
+    @Test
+    void newMultipleChoice_shouldReturnCreatedWhenValidRequest() throws Exception {
+        MultipleChoiceTaskRequest validRequest = new MultipleChoiceTaskRequest();
+        validRequest.setCourseId(1L);
+        validRequest.setStatement("Quais são frameworks Java?");
+        validRequest.setOrder(1);
+
+        List<OptionRequest> options = Arrays.asList(
+                new OptionRequest("Spring", true),
+                new OptionRequest("Hibernate", true),
+                new OptionRequest("Django", false)
+        );
+        validRequest.setOptions(options);
+
+        doNothing().when(taskService).createMultipleChoiceTask(any(MultipleChoiceTaskRequest.class));
+
+        mockMvc.perform(post("/task/new/multiplechoice")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validRequest)))
+                .andExpect(status().is2xxSuccessful());
+    }
+
+    @Test
+    void newMultipleChoice_shouldReturnBadRequestWhenServiceThrowsException() throws Exception {
+        MultipleChoiceTaskRequest invalidRequest = new MultipleChoiceTaskRequest();
+        invalidRequest.setCourseId(999L);
+        invalidRequest.setStatement("Pergunta inválida");
+        invalidRequest.setOrder(1);
+
+        List<OptionRequest> options = Arrays.asList(
+                new OptionRequest("Spring", true),
+                new OptionRequest("Hibernate", true),
+                new OptionRequest("Django", false)
+        );
+        invalidRequest.setOptions(options);
+
+        doThrow(new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.BAD_REQUEST, "Curso não encontrado"))
+                .when(taskService).createMultipleChoiceTask(any(MultipleChoiceTaskRequest.class));
+
+        mockMvc.perform(post("/task/new/multiplechoice")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void newMultipleChoice_shouldReturnBadRequestWhenDtoValidationFails() throws Exception {
+        MultipleChoiceTaskRequest invalidRequest = new MultipleChoiceTaskRequest();
+        invalidRequest.setCourseId(1L);
+        invalidRequest.setStatement("");
+        invalidRequest.setOrder(0);
+        invalidRequest.setOptions(null);
+
+        mockMvc.perform(post("/task/new/multiplechoice")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void newMultipleChoice_shouldReturnBadRequestWhenOptionsHaveLessThan3Items() throws Exception {
+        MultipleChoiceTaskRequest invalidRequest = new MultipleChoiceTaskRequest();
+        invalidRequest.setCourseId(1L);
+        invalidRequest.setStatement("Pergunta com poucas opções");
+        invalidRequest.setOrder(1);
+
+        List<OptionRequest> options = Arrays.asList(
+                new OptionRequest("Spring", true),
+                new OptionRequest("Hibernate", true)
+        );
+        invalidRequest.setOptions(options);
+
+        doThrow(new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.BAD_REQUEST, "A atividade deve ter no mínimo 3 e no máximo 5 alternativas"))
+                .when(taskService).createMultipleChoiceTask(any(MultipleChoiceTaskRequest.class));
+
+        mockMvc.perform(post("/task/new/multiplechoice")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
