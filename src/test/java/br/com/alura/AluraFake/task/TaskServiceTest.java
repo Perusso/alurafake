@@ -4,12 +4,16 @@ import br.com.alura.AluraFake.course.Course;
 import br.com.alura.AluraFake.course.CourseRepository;
 import br.com.alura.AluraFake.course.Status;
 import br.com.alura.AluraFake.task.dto.OpenTextTaskRequest;
+import br.com.alura.AluraFake.task.dto.OptionRequest;
+import br.com.alura.AluraFake.task.dto.SingleChoiceTaskRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
@@ -83,5 +87,215 @@ public class TaskServiceTest {
         assertThatThrownBy(() -> taskService.createOpenTextTask(request))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("mesmo enunciado");
+    }
+
+    @Test
+    void createSingleChoiceTask_shouldCreateTaskWhenRequestIsValid() {
+        Long courseId = 1L;
+        SingleChoiceTaskRequest request = new SingleChoiceTaskRequest();
+        request.setCourseId(courseId);
+        request.setStatement("Qual linguagem usamos no Spring Boot?");
+        request.setOrder(1);
+
+        List<OptionRequest> options = Arrays.asList(
+                new OptionRequest("Java", true),
+                new OptionRequest("Python", false),
+                new OptionRequest("Flutter", false)
+        );
+        request.setOptions(options);
+
+        Course mockCourse = mock(Course.class);
+        when(mockCourse.getStatus()).thenReturn(Status.BUILDING);
+        when(courseRepository.findById(courseId)).thenReturn(Optional.of(mockCourse));
+        when(taskRepository.existsByCourseAndStatement(mockCourse, request.getStatement())).thenReturn(false);
+        when(taskRepository.findMaxOrderByCourse(mockCourse)).thenReturn(Optional.empty());
+        when(taskRepository.findByCourseAndOrderGreaterThanEqualOrderByOrderDesc(any(), any())).thenReturn(List.of());
+
+        taskService.createSingleChoiceTask(request);
+
+        verify(courseRepository).findById(courseId);
+        verify(taskRepository).existsByCourseAndStatement(mockCourse, request.getStatement());
+        verify(taskRepository).save(any(Task.class));
+    }
+
+    @Test
+    void createSingleChoiceTask_shouldThrowExceptionWhenLessThan2Options() {
+        Long courseId = 1L;
+        SingleChoiceTaskRequest request = new SingleChoiceTaskRequest();
+        request.setCourseId(courseId);
+        request.setStatement("Pergunta com poucas opções");
+        request.setOrder(1);
+
+        List<OptionRequest> options = Arrays.asList(
+                new OptionRequest("Única opção", true)
+        );
+        request.setOptions(options);
+
+        Course mockCourse = mock(Course.class);
+        when(mockCourse.getStatus()).thenReturn(Status.BUILDING);
+        when(courseRepository.findById(courseId)).thenReturn(Optional.of(mockCourse));
+        when(taskRepository.existsByCourseAndStatement(mockCourse, request.getStatement())).thenReturn(false);
+        when(taskRepository.findMaxOrderByCourse(mockCourse)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> taskService.createSingleChoiceTask(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("no mínimo 2");
+    }
+
+    @Test
+    void createSingleChoiceTask_shouldThrowExceptionWhenMoreThan5Options() {
+        Long courseId = 1L;
+        SingleChoiceTaskRequest request = new SingleChoiceTaskRequest();
+        request.setCourseId(courseId);
+        request.setStatement("Pergunta com muitas opções");
+        request.setOrder(1);
+
+        List<OptionRequest> options = Arrays.asList(
+                new OptionRequest("Opção 1", true),
+                new OptionRequest("Opção 2", false),
+                new OptionRequest("Opção 3", false),
+                new OptionRequest("Opção 4", false),
+                new OptionRequest("Opção 5", false),
+                new OptionRequest("Opção 6", false)
+        );
+        request.setOptions(options);
+
+        Course mockCourse = mock(Course.class);
+        when(mockCourse.getStatus()).thenReturn(Status.BUILDING);
+        when(courseRepository.findById(courseId)).thenReturn(Optional.of(mockCourse));
+        when(taskRepository.existsByCourseAndStatement(mockCourse, request.getStatement())).thenReturn(false);
+        when(taskRepository.findMaxOrderByCourse(mockCourse)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> taskService.createSingleChoiceTask(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("no máximo 5");
+    }
+
+    @Test
+    void createSingleChoiceTask_shouldThrowExceptionWhenNoCorrectOption() {
+        Long courseId = 1L;
+        SingleChoiceTaskRequest request = new SingleChoiceTaskRequest();
+        request.setCourseId(courseId);
+        request.setStatement("Pergunta sem alternativa correta");
+        request.setOrder(1);
+
+        List<OptionRequest> options = Arrays.asList(
+                new OptionRequest("Opção A", false),
+                new OptionRequest("Opção B", false)
+        );
+        request.setOptions(options);
+
+        Course mockCourse = mock(Course.class);
+        when(mockCourse.getStatus()).thenReturn(Status.BUILDING);
+        when(courseRepository.findById(courseId)).thenReturn(Optional.of(mockCourse));
+        when(taskRepository.existsByCourseAndStatement(mockCourse, request.getStatement())).thenReturn(false);
+        when(taskRepository.findMaxOrderByCourse(mockCourse)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> taskService.createSingleChoiceTask(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("uma única alternativa correta");
+    }
+
+    @Test
+    void createSingleChoiceTask_shouldThrowExceptionWhenMultipleCorrectOptions() {
+        Long courseId = 1L;
+        SingleChoiceTaskRequest request = new SingleChoiceTaskRequest();
+        request.setCourseId(courseId);
+        request.setStatement("Pergunta com múltiplas corretas");
+        request.setOrder(1);
+
+        List<OptionRequest> options = Arrays.asList(
+                new OptionRequest("Opção A", true),
+                new OptionRequest("Opção B", true),
+                new OptionRequest("Opção C", false)
+        );
+        request.setOptions(options);
+
+        Course mockCourse = mock(Course.class);
+        when(mockCourse.getStatus()).thenReturn(Status.BUILDING);
+        when(courseRepository.findById(courseId)).thenReturn(Optional.of(mockCourse));
+        when(taskRepository.existsByCourseAndStatement(mockCourse, request.getStatement())).thenReturn(false);
+        when(taskRepository.findMaxOrderByCourse(mockCourse)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> taskService.createSingleChoiceTask(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("uma única alternativa correta");
+    }
+
+    @Test
+    void createSingleChoiceTask_shouldThrowExceptionWhenOptionTextTooShort() {
+        Long courseId = 1L;
+        SingleChoiceTaskRequest request = new SingleChoiceTaskRequest();
+        request.setCourseId(courseId);
+        request.setStatement("Pergunta com opção curta");
+        request.setOrder(1);
+
+        List<OptionRequest> options = Arrays.asList(
+                new OptionRequest("Sim", true),
+                new OptionRequest("Não", false)
+        );
+        request.setOptions(options);
+
+        Course mockCourse = mock(Course.class);
+        when(mockCourse.getStatus()).thenReturn(Status.BUILDING);
+        when(courseRepository.findById(courseId)).thenReturn(Optional.of(mockCourse));
+        when(taskRepository.existsByCourseAndStatement(mockCourse, request.getStatement())).thenReturn(false);
+        when(taskRepository.findMaxOrderByCourse(mockCourse)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> taskService.createSingleChoiceTask(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("no mínimo 4");
+    }
+
+    @Test
+    void createSingleChoiceTask_shouldThrowExceptionWhenDuplicateOptions() {
+        Long courseId = 1L;
+        SingleChoiceTaskRequest request = new SingleChoiceTaskRequest();
+        request.setCourseId(courseId);
+        request.setStatement("Pergunta com opções duplicadas");
+        request.setOrder(1);
+
+        List<OptionRequest> options = Arrays.asList(
+                new OptionRequest("Java", true),
+                new OptionRequest("Java", false),  // Duplicada
+                new OptionRequest("Python", false)
+        );
+        request.setOptions(options);
+
+        Course mockCourse = mock(Course.class);
+        when(mockCourse.getStatus()).thenReturn(Status.BUILDING);
+        when(courseRepository.findById(courseId)).thenReturn(Optional.of(mockCourse));
+        when(taskRepository.existsByCourseAndStatement(mockCourse, request.getStatement())).thenReturn(false);
+        when(taskRepository.findMaxOrderByCourse(mockCourse)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> taskService.createSingleChoiceTask(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("iguais entre si");
+    }
+
+    @Test
+    void createSingleChoiceTask_shouldThrowExceptionWhenOptionEqualsStatement() {
+        String statement = "Qual é a melhor linguagem?";
+        Long courseId = 1L;
+        SingleChoiceTaskRequest request = new SingleChoiceTaskRequest();
+        request.setCourseId(courseId);
+        request.setStatement(statement);
+        request.setOrder(1);
+
+        List<OptionRequest> options = Arrays.asList(
+                new OptionRequest("Java", true),
+                new OptionRequest(statement, false)
+        );
+        request.setOptions(options);
+
+        Course mockCourse = mock(Course.class);
+        when(mockCourse.getStatus()).thenReturn(Status.BUILDING);
+        when(courseRepository.findById(courseId)).thenReturn(Optional.of(mockCourse));
+        when(taskRepository.existsByCourseAndStatement(mockCourse, request.getStatement())).thenReturn(false);
+        when(taskRepository.findMaxOrderByCourse(mockCourse)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> taskService.createSingleChoiceTask(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("iguais ao enunciado");
     }
 }
