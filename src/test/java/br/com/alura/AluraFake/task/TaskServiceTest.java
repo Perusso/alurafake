@@ -257,7 +257,7 @@ public class TaskServiceTest {
 
         List<OptionRequest> options = Arrays.asList(
                 new OptionRequest("Java", true),
-                new OptionRequest("Java", false),  // Duplicada
+                new OptionRequest("Java", false),
                 new OptionRequest("Python", false)
         );
         request.setOptions(options);
