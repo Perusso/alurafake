@@ -15,6 +15,10 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @Query("SELECT MAX(t.order) FROM Task t WHERE t.course = :course")
     Optional<Integer> findMaxOrderByCourse(@Param("course") Course course);
 
-    List<Task> findByCourseAndOrderGreaterThanEqual(Course course, Integer order);
+    @Query("SELECT t FROM Task t WHERE t.course = :course AND t.order >= :order ORDER BY t.order DESC")
+    List<Task> findByCourseAndOrderGreaterThanEqualOrderByOrderDesc(
+            @Param("course") Course course,
+            @Param("order") Integer order
+    );
 
 }
