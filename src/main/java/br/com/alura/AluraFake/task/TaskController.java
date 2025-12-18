@@ -32,6 +32,7 @@ public class TaskController {
 
     @PostMapping("/task/new/multiplechoice")
     public ResponseEntity newMultipleChoice(@Valid @RequestBody MultipleChoiceTaskRequest request) {
+        taskService.createMultipleChoiceTask(request);
         return ResponseEntity.ok().build();
     }
 
