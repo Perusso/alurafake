@@ -13,6 +13,11 @@ public class OptionRequest {
     @NotNull
     private Boolean isCorrect;
 
+    public OptionRequest(String option, boolean isCorrect) {
+        this.option = option;
+        this.isCorrect = isCorrect;
+    }
+
 
     public String getOption() { return option; }
 
