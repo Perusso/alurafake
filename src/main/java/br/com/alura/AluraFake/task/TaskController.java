@@ -20,6 +20,7 @@ public class TaskController {
 
     @PostMapping("/task/new/opentext")
     public ResponseEntity newOpenTextExercise(@Valid @RequestBody OpenTextTaskRequest request) {
+        taskService.createOpenTextTask(request);
         return ResponseEntity.ok().build();
     }
 
