@@ -26,6 +26,8 @@ class CourseControllerTest {
     private CourseRepository courseRepository;
     @Autowired
     private ObjectMapper objectMapper;
+    @MockBean
+    private CourseService courseService;
 
     @Test
     void newCourseDTO__should_return_bad_request_when_email_is_invalid() throws Exception {
