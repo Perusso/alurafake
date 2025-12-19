@@ -6,8 +6,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 
@@ -111,6 +113,74 @@ class CourseControllerTest {
                 .andExpect(jsonPath("$[1].description").value("Curso de hibernate"))
                 .andExpect(jsonPath("$[2].title").value("Spring"))
                 .andExpect(jsonPath("$[2].description").value("Curso de spring"));
+    }
+
+
+    @Test
+    void publishCourse_shouldReturnOkWhenSuccessful() throws Exception {
+        Long courseId = 42L;
+
+        doNothing().when(courseService).publishCourse(courseId);
+
+        mockMvc.perform(post("/course/{id}/publish", courseId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+        verify(courseService, times(1)).publishCourse(courseId);
+    }
+
+    @Test
+    void publishCourse_shouldReturnNotFoundWhenCourseNotFound() throws Exception {
+        Long courseId = 999L;
+
+        doThrow(new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Course not found"))
+                .when(courseService).publishCourse(courseId);
+
+        mockMvc.perform(post("/course/{id}/publish", courseId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void publishCourse_shouldReturnBadRequestWhenCourseNotBuilding() throws Exception {
+        Long courseId = 42L;
+
+        doThrow(new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "Course is not in BUILDING status"))
+                .when(courseService).publishCourse(courseId);
+
+        mockMvc.perform(post("/course/{id}/publish", courseId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void publishCourse_shouldReturnBadRequestWhenMissingTaskTypes() throws Exception {
+        Long courseId = 42L;
+
+        doThrow(new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Course must have at least one activity of each type (Open Text, Single Choice, Multiple Choice)"))
+                .when(courseService).publishCourse(courseId);
+
+        mockMvc.perform(post("/course/{id}/publish", courseId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void publishCourse_shouldReturnBadRequestWhenTaskOrderNotContinuous() throws Exception {
+        Long courseId = 42L;
+
+        doThrow(new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.BAD_REQUEST,
+                "Activity orders are not continuous (e.g., 1, 2, 3...)"))
+                .when(courseService).publishCourse(courseId);
+
+        mockMvc.perform(post("/course/{id}/publish", courseId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
     }
 
 }
