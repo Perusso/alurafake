@@ -1,4 +1,7 @@
-package br.com.alura.AluraFake.user;
+package br.com.alura.AluraFake.user.dto;
+
+import br.com.alura.AluraFake.user.Role;
+import br.com.alura.AluraFake.user.User;
 
 import java.io.Serializable;
 

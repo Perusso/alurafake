@@ -1,5 +1,8 @@
 package br.com.alura.AluraFake.user;
 
+import br.com.alura.AluraFake.user.dto.InstructorCoursesReportResponse;
+import br.com.alura.AluraFake.user.dto.NewUserDTO;
+import br.com.alura.AluraFake.user.dto.UserListItemDTO;
 import br.com.alura.AluraFake.util.ErrorItemDTO;
 import jakarta.validation.Valid;
 import org.springframework.http.*;
@@ -12,8 +15,10 @@ import java.util.List;
 public class UserController {
 
     private final UserRepository userRepository;
+    private final InstructorReportService instructorReportService;
 
-    public UserController(UserRepository userRepository) {
+    public UserController(UserRepository userRepository, InstructorReportService instructorReportService) {
+        this.instructorReportService = instructorReportService;
         this.userRepository = userRepository;
     }
 
@@ -32,6 +37,14 @@ public class UserController {
     @GetMapping("/user/all")
     public List<UserListItemDTO> listAllUsers() {
         return userRepository.findAll().stream().map(UserListItemDTO::new).toList();
+    }
+
+    @GetMapping("/instructor/{id}/courses")
+    public ResponseEntity<InstructorCoursesReportResponse> getInstructorCoursesReport(
+            @PathVariable Long id) {
+
+        InstructorCoursesReportResponse report = instructorReportService.getInstructorCoursesReport(id);
+        return ResponseEntity.ok(report);
     }
 
 }
