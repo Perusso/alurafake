@@ -3,10 +3,12 @@ package br.com.alura.AluraFake.task;
 import br.com.alura.AluraFake.course.Course;
 import br.com.alura.AluraFake.course.CourseRepository;
 import br.com.alura.AluraFake.course.Status;
-import br.com.alura.AluraFake.task.dto.MultipleChoiceTaskRequest;
-import br.com.alura.AluraFake.task.dto.OpenTextTaskRequest;
-import br.com.alura.AluraFake.task.dto.OptionRequest;
-import br.com.alura.AluraFake.task.dto.SingleChoiceTaskRequest;
+import br.com.alura.AluraFake.task.dto.request.MultipleChoiceTaskRequest;
+import br.com.alura.AluraFake.task.dto.request.OpenTextTaskRequest;
+import br.com.alura.AluraFake.task.dto.request.OptionRequest;
+import br.com.alura.AluraFake.task.dto.request.SingleChoiceTaskRequest;
+import br.com.alura.AluraFake.task.dto.response.OptionResponse;
+import br.com.alura.AluraFake.task.dto.response.TaskResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +16,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -33,26 +37,29 @@ public class TaskService {
     }
 
     //TODO: Create specific exception classes for better error handling
-    public void createOpenTextTask(OpenTextTaskRequest request) {
+    public TaskResponse createOpenTextTask(OpenTextTaskRequest request) {
         Course course = validateCommonRequirements(request.getCourseId(), request.getStatement(), request.getOrder());
         shiftTasksForNewOrder(course, request.getOrder());
-        persistTask(course, request.getStatement(), request.getOrder(), Type.OPEN_TEXT, null);
+        Task task = persistTask(course, request.getStatement(), request.getOrder(), Type.OPEN_TEXT, null);
+        return taskToResponseDTO(task);
     }
 
-    public void createSingleChoiceTask(SingleChoiceTaskRequest request) {
+    public TaskResponse createSingleChoiceTask(SingleChoiceTaskRequest request) {
         Course course = validateCommonRequirements(request.getCourseId(), request.getStatement(), request.getOrder());
         validateSingleChoiceOptions(request.getOptions(), request.getStatement());
         shiftTasksForNewOrder(course, request.getOrder());
         String optionsJson = convertOptionsToJson(request.getOptions());
-        persistTask(course, request.getStatement(), request.getOrder(), Type.SINGLE_CHOICE, optionsJson);
+        Task task = persistTask(course, request.getStatement(), request.getOrder(), Type.SINGLE_CHOICE, optionsJson);
+        return taskToResponseDTO(task);
     }
 
-    public void createMultipleChoiceTask(MultipleChoiceTaskRequest request) {
+    public TaskResponse createMultipleChoiceTask(MultipleChoiceTaskRequest request) {
         Course course = validateCommonRequirements(request.getCourseId(), request.getStatement(), request.getOrder());
         validateMultipleChoiceOptions(request.getOptions(), request.getStatement());
         shiftTasksForNewOrder(course, request.getOrder());
         String optionsJson = convertOptionsToJson(request.getOptions());
-        persistTask(course, request.getStatement(), request.getOrder(), Type.MULTIPLE_CHOICE, optionsJson);
+        Task task = persistTask(course, request.getStatement(), request.getOrder(), Type.MULTIPLE_CHOICE, optionsJson);
+        return taskToResponseDTO(task);
     }
 
 
@@ -193,7 +200,7 @@ public class TaskService {
         }
     }
 
-    private void persistTask(Course course, String statement, Integer order, Type type, String optionsJson) {
+    private Task persistTask(Course course, String statement, Integer order, Type type, String optionsJson) {
         Task task = new Task();
         task.setCourse(course);
         task.setStatement(statement);
@@ -203,6 +210,30 @@ public class TaskService {
         if (optionsJson != null) {
             task.setOptions(optionsJson);
         }
-        taskRepository.save(task);
+        return taskRepository.save(task);
+    }
+
+    private TaskResponse taskToResponseDTO(Task task) {
+        List<OptionResponse> options = null;
+        if (task.getOptions() != null) {
+            options = convertJsonToOptionResponses(task.getOptions());
+        }
+        return new TaskResponse(task.getId(), task.getCourse().getId(), task.getStatement(), task.getOrder(), task.getType(), task.getCreatedAt(), options);
+    }
+
+    private List<OptionResponse> convertJsonToOptionResponses(String optionsJson) {
+        try {
+            List<OptionRequest> optionRequests = objectMapper.readValue(
+                    optionsJson,
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, OptionRequest.class)
+            );
+
+            return optionRequests.stream()
+                    .map(req -> new OptionResponse(req.getOption(), req.getIsCorrect()))
+                    .collect(Collectors.toList());
+
+        } catch (JsonProcessingException e) {
+            return Collections.emptyList();
+        }
     }
 }

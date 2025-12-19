@@ -1,4 +1,4 @@
-package br.com.alura.AluraFake.task.dto;
+package br.com.alura.AluraFake.task.dto.request;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;

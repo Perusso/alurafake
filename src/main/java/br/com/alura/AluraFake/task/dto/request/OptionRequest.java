@@ -1,4 +1,4 @@
-package br.com.alura.AluraFake.task.dto;
+package br.com.alura.AluraFake.task.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -12,6 +12,9 @@ public class OptionRequest {
 
     @NotNull
     private Boolean isCorrect;
+
+    public OptionRequest() {
+    }
 
     public OptionRequest(String option, boolean isCorrect) {
         this.option = option;

@@ -1,11 +1,12 @@
 package br.com.alura.AluraFake.task;
 
-import br.com.alura.AluraFake.task.dto.MultipleChoiceTaskRequest;
-import br.com.alura.AluraFake.task.dto.OpenTextTaskRequest;
-import br.com.alura.AluraFake.task.dto.SingleChoiceTaskRequest;
+import br.com.alura.AluraFake.task.dto.request.MultipleChoiceTaskRequest;
+import br.com.alura.AluraFake.task.dto.request.OpenTextTaskRequest;
+import br.com.alura.AluraFake.task.dto.request.SingleChoiceTaskRequest;
+import br.com.alura.AluraFake.task.dto.response.TaskResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,21 +20,21 @@ public class TaskController {
     }
 
     @PostMapping("/task/new/opentext")
-    public ResponseEntity newOpenTextExercise(@Valid @RequestBody OpenTextTaskRequest request) {
-        taskService.createOpenTextTask(request);
-        return ResponseEntity.ok().build();
+    @ResponseStatus(HttpStatus.CREATED)
+    public TaskResponse newOpenTextExercise(@Valid @RequestBody OpenTextTaskRequest request) {
+        return taskService.createOpenTextTask(request);
     }
 
     @PostMapping("/task/new/singlechoice")
-    public ResponseEntity newSingleChoice(@Valid @RequestBody SingleChoiceTaskRequest request) {
-        taskService.createSingleChoiceTask(request);
-        return ResponseEntity.ok().build();
+    @ResponseStatus(HttpStatus.CREATED)
+    public TaskResponse newSingleChoice(@Valid @RequestBody SingleChoiceTaskRequest request) {
+        return taskService.createSingleChoiceTask(request);
     }
 
     @PostMapping("/task/new/multiplechoice")
-    public ResponseEntity newMultipleChoice(@Valid @RequestBody MultipleChoiceTaskRequest request) {
-        taskService.createMultipleChoiceTask(request);
-        return ResponseEntity.ok().build();
+    @ResponseStatus(HttpStatus.CREATED)
+    public TaskResponse newMultipleChoice(@Valid @RequestBody MultipleChoiceTaskRequest request) {
+        return taskService.createMultipleChoiceTask(request);
     }
 
 }

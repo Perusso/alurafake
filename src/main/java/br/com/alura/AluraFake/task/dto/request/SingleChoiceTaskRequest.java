@@ -1,16 +1,17 @@
-package br.com.alura.AluraFake.task.dto;
+package br.com.alura.AluraFake.task.dto.request;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.util.List;
 
-public class MultipleChoiceTaskRequest extends TaskRequest {
+public class SingleChoiceTaskRequest extends TaskRequest {
 
     @NotNull
-    @Size(min = 3, max = 5)
+    @Size(min = 2, max = 5)
     private List<OptionRequest> options;
 
     public List<OptionRequest> getOptions() { return options; }
+
     public void setOptions(List<OptionRequest> options) { this.options = options; }
 }
