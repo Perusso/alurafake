@@ -113,7 +113,7 @@ public class TaskControllerTest {
         invalidRequest.setOptions(options);
 
         doThrow(new ResponseStatusException(
-                HttpStatus.BAD_REQUEST, "Curso não encontrado"))
+                HttpStatus.BAD_REQUEST, "Course not found"))
                 .when(taskService).createSingleChoiceTask(any(SingleChoiceTaskRequest.class));
 
         mockMvc.perform(post("/task/new/singlechoice")
@@ -208,7 +208,7 @@ public class TaskControllerTest {
         invalidRequest.setOptions(options);
 
         doThrow(new ResponseStatusException(
-                HttpStatus.BAD_REQUEST, "Curso não encontrado"))
+                HttpStatus.BAD_REQUEST, "Course not found"))
                 .when(taskService).createMultipleChoiceTask(any(MultipleChoiceTaskRequest.class));
 
         mockMvc.perform(post("/task/new/multiplechoice")

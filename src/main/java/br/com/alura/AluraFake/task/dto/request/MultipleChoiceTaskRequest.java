@@ -8,7 +8,6 @@ import java.util.List;
 public class MultipleChoiceTaskRequest extends TaskRequest {
 
     @NotNull
-    @Size(min = 3, max = 5)
     private List<OptionRequest> options;
 
     public List<OptionRequest> getOptions() { return options; }
