@@ -1,10 +1,12 @@
 package br.com.alura.AluraFake.task;
 
 import br.com.alura.AluraFake.course.CourseRepository;
-import br.com.alura.AluraFake.task.dto.MultipleChoiceTaskRequest;
-import br.com.alura.AluraFake.task.dto.OpenTextTaskRequest;
-import br.com.alura.AluraFake.task.dto.OptionRequest;
-import br.com.alura.AluraFake.task.dto.SingleChoiceTaskRequest;
+import br.com.alura.AluraFake.task.dto.request.MultipleChoiceTaskRequest;
+import br.com.alura.AluraFake.task.dto.request.OpenTextTaskRequest;
+import br.com.alura.AluraFake.task.dto.request.OptionRequest;
+import br.com.alura.AluraFake.task.dto.request.SingleChoiceTaskRequest;
+import br.com.alura.AluraFake.task.dto.response.OptionResponse;
+import br.com.alura.AluraFake.task.dto.response.TaskResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,12 +17,12 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -78,7 +80,18 @@ public class TaskControllerTest {
         );
         validRequest.setOptions(options);
 
-        doNothing().when(taskService).createSingleChoiceTask(any(SingleChoiceTaskRequest.class));
+        List<OptionResponse> optionResponses = Arrays.asList(
+                new OptionResponse("Java", true),
+                new OptionResponse("Python", false),
+                new OptionResponse("Ruby", false)
+        );
+
+        TaskResponse mockResponse = new TaskResponse(
+                2L, 1L, "Qual linguagem é usada no Spring Boot?",
+                1, Type.SINGLE_CHOICE, LocalDateTime.now(), optionResponses);
+
+        when(taskService.createSingleChoiceTask(any(SingleChoiceTaskRequest.class)))
+                .thenReturn(mockResponse);
 
         mockMvc.perform(post("/task/new/singlechoice")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -160,7 +173,19 @@ public class TaskControllerTest {
         );
         validRequest.setOptions(options);
 
-        doNothing().when(taskService).createMultipleChoiceTask(any(MultipleChoiceTaskRequest.class));
+        List<OptionResponse> optionResponses = Arrays.asList(
+                new OptionResponse("Spring", true),
+                new OptionResponse("Hibernate", true),
+                new OptionResponse("Django", false)
+        );
+
+        TaskResponse mockResponse = new TaskResponse(
+                3L, 1L, "Quais são frameworks Java?",
+                1, Type.MULTIPLE_CHOICE, LocalDateTime.now(), optionResponses
+        );
+
+        when(taskService.createMultipleChoiceTask(any(MultipleChoiceTaskRequest.class)))
+                .thenReturn(mockResponse);
 
         mockMvc.perform(post("/task/new/multiplechoice")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -3,20 +3,24 @@ package br.com.alura.AluraFake.task;
 import br.com.alura.AluraFake.course.Course;
 import br.com.alura.AluraFake.course.CourseRepository;
 import br.com.alura.AluraFake.course.Status;
-import br.com.alura.AluraFake.task.dto.MultipleChoiceTaskRequest;
-import br.com.alura.AluraFake.task.dto.OpenTextTaskRequest;
-import br.com.alura.AluraFake.task.dto.OptionRequest;
-import br.com.alura.AluraFake.task.dto.SingleChoiceTaskRequest;
+import br.com.alura.AluraFake.task.dto.request.MultipleChoiceTaskRequest;
+import br.com.alura.AluraFake.task.dto.request.OpenTextTaskRequest;
+import br.com.alura.AluraFake.task.dto.request.OptionRequest;
+import br.com.alura.AluraFake.task.dto.request.SingleChoiceTaskRequest;
+import br.com.alura.AluraFake.task.dto.response.OptionResponse;
+import br.com.alura.AluraFake.task.dto.response.TaskResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
@@ -46,8 +50,23 @@ public class TaskServiceTest {
         when(taskRepository.existsByCourseAndStatement(mockCourse, request.getStatement())).thenReturn(false);
         when(taskRepository.findMaxOrderByCourse(mockCourse)).thenReturn(Optional.empty());
 
-        taskService.createOpenTextTask(request);
+        Task savedTask = new Task();
+        savedTask.setId(1L);
+        savedTask.setStatement("Fake Statement");
+        savedTask.setOrder(1);
+        savedTask.setType(Type.OPEN_TEXT);
+        savedTask.setCourse(mockCourse);
+        savedTask.setCreatedAt(LocalDateTime.now());
 
+        when(taskRepository.save(any(Task.class))).thenReturn(savedTask);
+
+        TaskResponse response = taskService.createOpenTextTask(request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getId()).isEqualTo(1L);
+        assertThat(response.getStatement()).isEqualTo("Fake Statement");
+        assertThat(response.getType()).isEqualTo(Type.OPEN_TEXT);
+        assertThat(response.getOptions()).isNull();
         verify(courseRepository).findById(courseId);
         verify(taskRepository).existsByCourseAndStatement(mockCourse, request.getStatement());
         verify(taskRepository).save(any(Task.class));
@@ -112,8 +131,30 @@ public class TaskServiceTest {
         when(taskRepository.findMaxOrderByCourse(mockCourse)).thenReturn(Optional.empty());
         when(taskRepository.findByCourseAndOrderGreaterThanEqualOrderByOrderDesc(any(), any())).thenReturn(List.of());
 
-        taskService.createSingleChoiceTask(request);
 
+        Task savedTask = new Task();
+        savedTask.setId(1L);
+        savedTask.setStatement("Qual linguagem usamos no Spring Boot?");
+        savedTask.setOrder(1);
+        savedTask.setType(Type.SINGLE_CHOICE);
+        savedTask.setCourse(mockCourse);
+        savedTask.setCreatedAt(LocalDateTime.now());
+        savedTask.setOptions("[{\"option\":\"Java\",\"isCorrect\":true},{\"option\":\"Python\",\"isCorrect\":false},{\"option\":\"Flutter\",\"isCorrect\":false}]");
+
+        when(taskRepository.save(any(Task.class))).thenReturn(savedTask);
+
+        List<OptionResponse> optionResponses = Arrays.asList(
+                new OptionResponse("Java", true),
+                new OptionResponse("Python", false),
+                new OptionResponse("Flutter", false)
+        );
+
+        TaskResponse response = taskService.createSingleChoiceTask(request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getId()).isEqualTo(1L);
+        assertThat(response.getStatement()).isEqualTo("Qual linguagem usamos no Spring Boot?");
+        assertThat(response.getType()).isEqualTo(Type.SINGLE_CHOICE);
         verify(courseRepository).findById(courseId);
         verify(taskRepository).existsByCourseAndStatement(mockCourse, request.getStatement());
         verify(taskRepository).save(any(Task.class));
@@ -322,8 +363,23 @@ public class TaskServiceTest {
         when(taskRepository.findMaxOrderByCourse(mockCourse)).thenReturn(Optional.empty());
         when(taskRepository.findByCourseAndOrderGreaterThanEqualOrderByOrderDesc(any(), any())).thenReturn(List.of());
 
-        taskService.createMultipleChoiceTask(request);
+        Task savedTask = new Task();
+        savedTask.setId(1L);
+        savedTask.setStatement("Quais são frameworks Java?");
+        savedTask.setOrder(1);
+        savedTask.setType(Type.MULTIPLE_CHOICE);
+        savedTask.setCourse(mockCourse);
+        savedTask.setCreatedAt(LocalDateTime.now());
+        savedTask.setOptions("[{\"option\":\"Spring\",\"isCorrect\":true},{\"option\":\"Hibernate\",\"isCorrect\":true},{\"option\":\"Django\",\"isCorrect\":false}]");
 
+        when(taskRepository.save(any(Task.class))).thenReturn(savedTask);
+
+        TaskResponse response = taskService.createMultipleChoiceTask(request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getId()).isEqualTo(1L);
+        assertThat(response.getStatement()).isEqualTo("Quais são frameworks Java?");
+        assertThat(response.getType()).isEqualTo(Type.MULTIPLE_CHOICE);
         verify(courseRepository).findById(courseId);
         verify(taskRepository).existsByCourseAndStatement(mockCourse, request.getStatement());
         verify(taskRepository).save(any(Task.class));

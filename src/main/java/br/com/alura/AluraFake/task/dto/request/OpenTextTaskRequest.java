@@ -1,4 +1,4 @@
-package br.com.alura.AluraFake.task.dto;
+package br.com.alura.AluraFake.task.dto.request;
 
 public class OpenTextTaskRequest extends TaskRequest {
 }
