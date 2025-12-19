@@ -1,14 +1,20 @@
 package br.com.alura.AluraFake.user;
 
+import br.com.alura.AluraFake.course.Status;
+import br.com.alura.AluraFake.user.dto.InstructorCourseDTO;
+import br.com.alura.AluraFake.user.dto.InstructorCoursesReportResponse;
 import br.com.alura.AluraFake.user.dto.NewUserDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 
 import static org.mockito.Mockito.when;
@@ -23,6 +29,9 @@ class UserControllerTest {
 
     @MockBean
     private UserRepository userRepository;
+
+    @MockBean
+    private InstructorReportService instructorReportService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -102,4 +111,53 @@ class UserControllerTest {
                 .andExpect(jsonPath("$[1].name").value("User 2"));
     }
 
+
+    @Test
+    void getInstructorCoursesReport_shouldReturnReportWhenInstructorExists() throws Exception {
+        Long instructorId = 7L;
+
+        InstructorCoursesReportResponse report = new InstructorCoursesReportResponse(
+                Arrays.asList(
+                        new InstructorCourseDTO(1L, "Java", Status.PUBLISHED,
+                                LocalDateTime.now(), 5L),
+                        new InstructorCourseDTO(2L, "Spring", Status.BUILDING,
+                                null, 3L)
+                ),
+                1L
+        );
+
+        when(instructorReportService.getInstructorCoursesReport(instructorId))
+                .thenReturn(report);
+
+        mockMvc.perform(get("/instructor/{id}/courses", instructorId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.courses[0].id").value(1))
+                .andExpect(jsonPath("$.courses[0].title").value("Java"))
+                .andExpect(jsonPath("$.courses[0].taskCount").value(5))
+                .andExpect(jsonPath("$.totalPublishedCourses").value(1));
+    }
+
+    @Test
+    void getInstructorCoursesReport_shouldReturn404WhenInstructorNotFound() throws Exception {
+        Long nonExistentId = 999L;
+
+        when(instructorReportService.getInstructorCoursesReport(nonExistentId))
+                .thenThrow(new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "User not found"));
+
+        mockMvc.perform(get("/instructor/{id}/courses", nonExistentId))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void getInstructorCoursesReport_shouldReturn400WhenUserIsNotInstructor() throws Exception {
+        Long studentId = 8L;
+
+        when(instructorReportService.getInstructorCoursesReport(studentId))
+                .thenThrow(new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "User is not an instructor"));
+
+        mockMvc.perform(get("/instructor/{id}/courses", studentId))
+                .andExpect(status().isBadRequest());
+    }
 }
