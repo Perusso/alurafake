@@ -17,7 +17,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: '21'
-          distribution: 'graalvm-ce-21'
+          distribution: 'graalvm-community'
           cache: maven
 
       - name: Build and run tests
