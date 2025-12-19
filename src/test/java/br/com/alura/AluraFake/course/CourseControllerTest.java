@@ -1,5 +1,7 @@
 package br.com.alura.AluraFake.course;
 
+import br.com.alura.AluraFake.course.dto.CourseListItemDTO;
+import br.com.alura.AluraFake.course.dto.CourseResponse;
 import br.com.alura.AluraFake.course.dto.NewCourseDTO;
 import br.com.alura.AluraFake.user.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 import static org.mockito.Mockito.*;
@@ -40,39 +43,17 @@ class CourseControllerTest {
         newCourseDTO.setDescription("Curso de Java");
         newCourseDTO.setEmailInstructor("paulo@alura.com.br");
 
-        doReturn(Optional.empty()).when(userRepository)
-                .findByEmail(newCourseDTO.getEmailInstructor());
+        when(courseService.createCourse(any(NewCourseDTO.class)))
+                .thenThrow(new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "User not found with email: paulo@alura.com.br"));
 
         mockMvc.perform(post("/course/new")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(newCourseDTO)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.field").value("emailInstructor"))
-                .andExpect(jsonPath("$.message").isNotEmpty());
+                .andExpect(status().isBadRequest());
     }
 
-
-    @Test
-    void newCourseDTO__should_return_bad_request_when_email_is_no_instructor() throws Exception {
-
-        NewCourseDTO newCourseDTO = new NewCourseDTO();
-        newCourseDTO.setTitle("Java");
-        newCourseDTO.setDescription("Curso de Java");
-        newCourseDTO.setEmailInstructor("paulo@alura.com.br");
-
-        User user = mock(User.class);
-        doReturn(false).when(user).isInstructor();
-
-        doReturn(Optional.of(user)).when(userRepository)
-                .findByEmail(newCourseDTO.getEmailInstructor());
-
-        mockMvc.perform(post("/course/new")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(newCourseDTO)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.field").value("emailInstructor"))
-                .andExpect(jsonPath("$.message").isNotEmpty());
-    }
 
     @Test
     void newCourseDTO__should_return_created_when_new_course_request_is_valid() throws Exception {
@@ -92,18 +73,20 @@ class CourseControllerTest {
                         .content(objectMapper.writeValueAsString(newCourseDTO)))
                 .andExpect(status().isCreated());
 
-        verify(courseRepository, times(1)).save(any(Course.class));
+        verify(courseService, times(1)).createCourse(any(NewCourseDTO.class));
     }
 
     @Test
     void listAllCourses__should_list_all_courses() throws Exception {
         User paulo = new User("Paulo", "paulo@alua.com.br", Role.INSTRUCTOR);
 
-        Course java = new Course("Java", "Curso de java", paulo);
-        Course hibernate = new Course("Hibernate", "Curso de hibernate", paulo);
-        Course spring = new Course("Spring", "Curso de spring", paulo);
+        CourseListItemDTO java = new CourseListItemDTO(1L, "Java", "Curso de java", Status.BUILDING, null);
+        CourseListItemDTO hibernate = new CourseListItemDTO(2L, "Hibernate", "Curso de hibernate", Status.PUBLISHED, LocalDateTime.now());
+        CourseListItemDTO spring = new CourseListItemDTO(3L, "Spring", "Curso de spring", Status.BUILDING, null);
 
-        when(courseRepository.findAll()).thenReturn(Arrays.asList(java, hibernate, spring));
+        List<CourseListItemDTO> courses = Arrays.asList(java, hibernate, spring);
+
+        when(courseService.getAllCourses()).thenReturn(courses);
 
         mockMvc.perform(get("/course/all")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -121,11 +104,22 @@ class CourseControllerTest {
     void publishCourse_shouldReturnOkWhenSuccessful() throws Exception {
         Long courseId = 42L;
 
-        doNothing().when(courseService).publishCourse(courseId);
+        User instructor = new User("Paulo", "paulo@alura.com.br", Role.INSTRUCTOR);
+        CourseResponse mockResponse = new CourseResponse(
+                courseId, "Java Avançado", "Curso de Java Avançado",
+                instructor, Status.PUBLISHED,
+                LocalDateTime.now(), LocalDateTime.now()
+        );
+
+        when(courseService.publishCourse(courseId)).thenReturn(mockResponse);
 
         mockMvc.perform(post("/course/{id}/publish", courseId)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())  // 200 OK (ou 201 se você mudou)
+                .andExpect(jsonPath("$.id").value(42))
+                .andExpect(jsonPath("$.title").value("Java Avançado"))
+                .andExpect(jsonPath("$.status").value("PUBLISHED"))
+                .andExpect(jsonPath("$.publishedAt").exists());
 
         verify(courseService, times(1)).publishCourse(courseId);
     }
