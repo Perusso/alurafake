@@ -10,8 +10,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Arrays;
 import java.util.List;
@@ -97,8 +99,8 @@ public class TaskControllerTest {
         );
         invalidRequest.setOptions(options);
 
-        doThrow(new org.springframework.web.server.ResponseStatusException(
-                org.springframework.http.HttpStatus.BAD_REQUEST, "Curso não encontrado"))
+        doThrow(new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "Curso não encontrado"))
                 .when(taskService).createSingleChoiceTask(any(SingleChoiceTaskRequest.class));
 
         mockMvc.perform(post("/task/new/singlechoice")
@@ -128,7 +130,7 @@ public class TaskControllerTest {
         invalidRequest.setStatement("Pergunta com poucas opções");
         invalidRequest.setOrder(1);
 
-        List<OptionRequest> options = Arrays.asList(
+        List<OptionRequest> options = List.of(
                 new OptionRequest("Única opção", true)
         );
         invalidRequest.setOptions(options);
@@ -180,8 +182,8 @@ public class TaskControllerTest {
         );
         invalidRequest.setOptions(options);
 
-        doThrow(new org.springframework.web.server.ResponseStatusException(
-                org.springframework.http.HttpStatus.BAD_REQUEST, "Curso não encontrado"))
+        doThrow(new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "Curso não encontrado"))
                 .when(taskService).createMultipleChoiceTask(any(MultipleChoiceTaskRequest.class));
 
         mockMvc.perform(post("/task/new/multiplechoice")
@@ -217,8 +219,8 @@ public class TaskControllerTest {
         );
         invalidRequest.setOptions(options);
 
-        doThrow(new org.springframework.web.server.ResponseStatusException(
-                org.springframework.http.HttpStatus.BAD_REQUEST, "A atividade deve ter no mínimo 3 e no máximo 5 alternativas"))
+        doThrow(new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "A atividade deve ter no mínimo 3 e no máximo 5 alternativas"))
                 .when(taskService).createMultipleChoiceTask(any(MultipleChoiceTaskRequest.class));
 
         mockMvc.perform(post("/task/new/multiplechoice")
