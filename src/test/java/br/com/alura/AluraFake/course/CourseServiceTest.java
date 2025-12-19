@@ -1,15 +1,19 @@
 package br.com.alura.AluraFake.course;
 
+import br.com.alura.AluraFake.course.dto.CourseResponse;
 import br.com.alura.AluraFake.task.TaskRepository;
+import br.com.alura.AluraFake.user.Role;
+import br.com.alura.AluraFake.user.User;
+import br.com.alura.AluraFake.user.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
 import java.util.Optional;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
@@ -25,22 +29,28 @@ public class CourseServiceTest {
     @MockBean
     private TaskRepository taskRepository;
 
+    @MockBean
+    private UserRepository userRepository;
+
     @Test
     void publishCourse_shouldPublishCourseWhenAllConditionsAreMet() {
         Long courseId = 1L;
 
-        Course course = mock(Course.class);
-        when(course.getStatus()).thenReturn(Status.BUILDING);
+        User instructor = new User("Paulo", "paulo@alura.com.br", Role.INSTRUCTOR);
+        Course course = new Course("Java", "Curso de Java", instructor);
 
         when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
         when(taskRepository.countDistinctTypeByCourse(course)).thenReturn(3L);
         when(taskRepository.countByCourse(course)).thenReturn(5L);
         when(taskRepository.findMaxOrderByCourse(course)).thenReturn(Optional.of(5));
+        when(courseRepository.save(course)).thenReturn(course);
 
-        courseService.publishCourse(courseId);
+        CourseResponse response = courseService.publishCourse(courseId);
 
-        verify(course).setStatus(Status.PUBLISHED);
-        verify(course).setPublishedAt(any(LocalDateTime.class));
+        assertThat(response).isNotNull();
+        assertThat(response.getTitle()).isEqualTo("Java");
+        assertThat(response.getStatus()).isEqualTo(Status.PUBLISHED);
+        assertThat(response.getPublishedAt()).isNotNull();
         verify(courseRepository).save(course);
     }
 
