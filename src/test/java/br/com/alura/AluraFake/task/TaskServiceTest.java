@@ -106,7 +106,7 @@ public class TaskServiceTest {
 
         assertThatThrownBy(() -> taskService.createOpenTextTask(request))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("mesmo enunciado");
+                .hasMessageContaining("Already exists a task with the same statement in this course");
     }
 
     @Test
@@ -181,7 +181,7 @@ public class TaskServiceTest {
 
         assertThatThrownBy(() -> taskService.createSingleChoiceTask(request))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("no mínimo 2");
+                .hasMessageContaining("The activity must have at least 2 and at most 5 alternatives");
     }
 
     @Test
@@ -210,7 +210,7 @@ public class TaskServiceTest {
 
         assertThatThrownBy(() -> taskService.createSingleChoiceTask(request))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("no máximo 5");
+                .hasMessageContaining("The activity must have at least 2 and at most 5 alternatives");
     }
 
     @Test
@@ -235,7 +235,7 @@ public class TaskServiceTest {
 
         assertThatThrownBy(() -> taskService.createSingleChoiceTask(request))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("uma única alternativa correta");
+                .hasMessageContaining("Activity must have one correct option");
     }
 
     @Test
@@ -261,7 +261,7 @@ public class TaskServiceTest {
 
         assertThatThrownBy(() -> taskService.createSingleChoiceTask(request))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("uma única alternativa correta");
+                .hasMessageContaining("Activity must have one correct option");
     }
 
     @Test
@@ -286,7 +286,7 @@ public class TaskServiceTest {
 
         assertThatThrownBy(() -> taskService.createSingleChoiceTask(request))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("no mínimo 4");
+                .hasMessageContaining("Options must have between 4 and 80 characters");
     }
 
     @Test
@@ -312,7 +312,7 @@ public class TaskServiceTest {
 
         assertThatThrownBy(() -> taskService.createSingleChoiceTask(request))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("iguais entre si");
+                .hasMessageContaining("All options must be unique");
     }
 
     @Test
@@ -338,7 +338,7 @@ public class TaskServiceTest {
 
         assertThatThrownBy(() -> taskService.createSingleChoiceTask(request))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("iguais ao enunciado");
+                .hasMessageContaining("Options cannot be the same as the task statement");
     }
 
     @Test
@@ -407,7 +407,7 @@ public class TaskServiceTest {
 
         assertThatThrownBy(() -> taskService.createMultipleChoiceTask(request))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("no mínimo 3");
+                .hasMessageContaining("Activity must have at least 3 and at most 5 alternatives");
     }
 
     @Test
@@ -436,7 +436,7 @@ public class TaskServiceTest {
 
         assertThatThrownBy(() -> taskService.createMultipleChoiceTask(request))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("no máximo 5");
+                .hasMessageContaining("at least 3 and at most 5");
     }
 
     @Test
@@ -462,7 +462,7 @@ public class TaskServiceTest {
 
         assertThatThrownBy(() -> taskService.createMultipleChoiceTask(request))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("duas ou mais alternativas corretas");
+                .hasMessageContaining("Activity must have at least two correct options");
     }
 
     @Test
@@ -488,7 +488,7 @@ public class TaskServiceTest {
 
         assertThatThrownBy(() -> taskService.createMultipleChoiceTask(request))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("ao menos uma alternativa incorreta");
+                .hasMessageContaining("Activity must have at least one incorrect option");
     }
 
     @Test
@@ -514,7 +514,7 @@ public class TaskServiceTest {
 
         assertThatThrownBy(() -> taskService.createMultipleChoiceTask(request))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("no mínimo 4");
+                .hasMessageContaining("Options must have between 4 and 80 characters");
     }
 
     @Test
@@ -540,7 +540,7 @@ public class TaskServiceTest {
 
         assertThatThrownBy(() -> taskService.createMultipleChoiceTask(request))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("iguais entre si");
+                .hasMessageContaining("All options must be unique");
     }
 
     @Test
@@ -567,6 +567,6 @@ public class TaskServiceTest {
 
         assertThatThrownBy(() -> taskService.createMultipleChoiceTask(request))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("iguais ao enunciado");
+                .hasMessageContaining("Options cannot be the same as the task statement");
     }
 }

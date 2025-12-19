@@ -67,27 +67,27 @@ public class TaskService {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
-                        "Curso não encontrado"));
+                        "Course not found"));
 
         if (course.getStatus() != Status.BUILDING) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Um curso só pode receber atividades se seu status for BUILDING");
+                    "Cannot add tasks to a course that is not in BUILDING status");
         }
 
         boolean statementExists = taskRepository.existsByCourseAndStatement(course, statement);
         if (statementExists) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "O curso não pode ter duas questões com o mesmo enunciado");
+                    "Already exists a task with the same statement in this course");
         }
 
         int maxOrder = taskRepository.findMaxOrderByCourse(course).orElse(0);
         if (order > maxOrder + 1) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    String.format("Ordem inválida. A sequência deve ser contínua. " +
-                            "A próxima ordem permitida é %d", maxOrder + 1));
+                    String.format("Invalid Order, must be continuous" +
+                            "Next allowed order is %d", maxOrder + 1));
         }
         return course;
     }
@@ -104,14 +104,14 @@ public class TaskService {
         if (options == null) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Atividade de alternativa única deve ter opções");
+                    "Single choice task must have options");
         }
 
         int size = options.size();
         if (size < 2 || size > 5) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "A atividade deve ter no mínimo 2 e no máximo 5 alternativas");
+                    "The activity must have at least 2 and at most 5 alternatives");
         }
 
         validateCommonOptionRules(options, statement);
@@ -123,7 +123,7 @@ public class TaskService {
         if (correctCount != 1) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "A atividade deve ter uma única alternativa correta. Encontradas: " + correctCount);
+                    "Activity must have one correct option, Found: " + correctCount);
         }
     }
 
@@ -133,7 +133,7 @@ public class TaskService {
         } catch (JsonProcessingException e) {
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Erro ao processar opções da atividade");
+                    "Error trying to process options");
         }
     }
 
@@ -141,14 +141,14 @@ public class TaskService {
         if (options == null) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Atividade de múltipla escolha deve ter opções");
+                    "Multiple choice task must have options");
         }
 
         int size = options.size();
         if (size < 3 || size > 5) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "A atividade deve ter no mínimo 3 e no máximo 5 alternativas");
+                    "Activity must have at least 3 and at most 5 alternatives");
         }
 
         validateCommonOptionRules(options, statement);
@@ -160,14 +160,14 @@ public class TaskService {
         if (correctCount < 2) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "A atividade deve ter duas ou mais alternativas corretas");
+                    "Activity must have at least two correct options");
         }
 
         long incorrectCount = size - correctCount;
         if (incorrectCount < 1) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "A atividade deve ter ao menos uma alternativa incorreta");
+                    "Activity must have at least one incorrect option");
         }
     }
 
@@ -177,14 +177,15 @@ public class TaskService {
             if (text == null || text.length() < 4 || text.length() > 80) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
-                        "As alternativas devem ter no mínimo 4 e no máximo 80 caracteres. " +
-                                "Problema na opção: '" + text + "'");
+                        "Options must have between 4 and 80 characters. " +
+                                "Problem in option: '" + text + "'");
             }
 
             if (text.equals(statement)) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_REQUEST,
-                        "As alternativas não podem ser iguais ao enunciado da atividade");
+                        "Options cannot be the same as the task statement. " +
+                                "Problem in option: '" + text + "'");
             }
         }
 
@@ -196,7 +197,7 @@ public class TaskService {
         if (distinctCount != options.size()) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "As alternativas não podem ser iguais entre si");
+                    "All options must be unique");
         }
     }
 
